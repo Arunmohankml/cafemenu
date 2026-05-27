@@ -1,0 +1,41 @@
+{
+  "name": "futuristic-cafe",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.8.7",
+    "@supabase/supabase-js": "^2.105.4",
+    "clsx": "^2.0.0",
+    "firebase": "^12.13.0",
+    "firebase-admin": "^13.10.0",
+    "framer-motion": "^10.16.4",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.7.0",
+    "lucide-react": "^0.284.0",
+    "next": "14.0.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-hot-toast": "^2.4.1",
+    "recharts": "^2.10.1",
+    "swr": "^2.2.4",
+    "tailwind-merge": "^2.0.0",
+    "zustand": "^4.4.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.1",
+    "postcss": "^8",
+    "tailwindcss": "^3",
+    "typescript": "^5"
+  }
+}
