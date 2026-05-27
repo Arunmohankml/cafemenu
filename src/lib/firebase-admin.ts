@@ -4,15 +4,12 @@ const isMockAdmin = !process.env.FIREBASE_PRIVATE_KEY || !process.env.FIREBASE_P
 
 let adminAuthInstance: any;
 
-if (isMockAdmin) {
-  // Mock Firebase Admin Auth implementation for local testing
-  adminAuthInstance = {
+const createMockAdminAuth = () => {
+  return {
     createSessionCookie: async (idToken: string) => {
-      // Just pass the idToken through as the session cookie
       return idToken;
     },
     verifySessionCookie: async (sessionCookie: string) => {
-      // Return a basic mock decoded claims object
       return {
         sub: 'mock-user-1',
         uid: 'mock-user-1',
@@ -21,18 +18,27 @@ if (isMockAdmin) {
       };
     }
   };
+};
+
+if (isMockAdmin) {
+  adminAuthInstance = createMockAdminAuth();
 } else {
-  // Initialize real Firebase Admin SDK
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
+  try {
+    // Initialize real Firebase Admin SDK
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/^['"]|['"]$/g, '')?.replace(/\\n/g, '\n'),
+        }),
+      });
+    }
+    adminAuthInstance = admin.auth();
+  } catch (error: any) {
+    console.warn("⚠️ Firebase Admin SDK initialization failed (e.g. invalid/corrupt private key). Falling back to Mock Admin. Reason:", error.message);
+    adminAuthInstance = createMockAdminAuth();
   }
-  adminAuthInstance = admin.auth();
 }
 
 export const adminAuth = adminAuthInstance;

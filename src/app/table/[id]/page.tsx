@@ -41,7 +41,7 @@ export default function TablePage({ params }: { params: { id: string } }) {
 
     const channel = supabase
       .channel(`table-${tableId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `table_id=eq.${tableId}` }, (payload) => {
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `table_id=eq.${tableId}` }, (payload: any) => {
         if (payload.new.status === 'completed') {
           setActiveOrder(null);
           localStorage.removeItem(`active_order_${tableId}`);
@@ -82,7 +82,7 @@ export default function TablePage({ params }: { params: { id: string } }) {
     
     if (data) {
       setMenuItems(data as MenuItem[]);
-      const cats = Array.from(new Set(data.map(item => item.categories?.name).filter(Boolean))) as string[];
+      const cats = Array.from(new Set(data.map((item: any) => item.categories?.name).filter(Boolean))) as string[];
       setCategories(['All', ...cats]);
     }
   };
@@ -129,7 +129,7 @@ export default function TablePage({ params }: { params: { id: string } }) {
       
       if (error) throw error;
       if (data) {
-        const cartItems = data.map(item => ({
+        const cartItems = data.map((item: any) => ({
           id: item.menu_item_id,
           name: item.name,
           price: Number(item.price),

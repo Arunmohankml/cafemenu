@@ -215,17 +215,17 @@ class MockQueryBuilder {
   }
 
   eq(field: string, value: any) {
-    this.filters.push((item) => item[field] === value);
+    this.filters.push((item: any) => item[field] === value);
     return this;
   }
 
   neq(field: string, value: any) {
-    this.filters.push((item) => item[field] !== value);
+    this.filters.push((item: any) => item[field] !== value);
     return this;
   }
 
   in(field: string, values: any[]) {
-    this.filters.push((item) => values.includes(item[field]));
+    this.filters.push((item: any) => values.includes(item[field]));
     return this;
   }
 
@@ -278,7 +278,7 @@ class MockQueryBuilder {
       // menu_items -> categories
       if (this.tableName === 'menu_items') {
         const cats = getLocalStorageData('mock_categories', DEFAULT_CATEGORIES);
-        filtered = filtered.map(item => {
+        filtered = filtered.map((item: any) => {
           const category = cats.find((c: any) => c.id === item.category_id);
           return {
             ...item,
@@ -290,7 +290,7 @@ class MockQueryBuilder {
       // orders -> order_items
       if (this.tableName === 'orders') {
         const allOrderItems = getLocalStorageData('mock_order_items', []);
-        filtered = filtered.map(order => {
+        filtered = filtered.map((order: any) => {
           const items = allOrderItems.filter((oi: any) => oi.order_id === order.id);
           return {
             ...order,
@@ -302,7 +302,7 @@ class MockQueryBuilder {
       // order_items -> menu_items
       if (this.tableName === 'order_items') {
         const allMenuItems = getLocalStorageData('mock_menu_items', DEFAULT_MENU_ITEMS);
-        filtered = filtered.map(oi => {
+        filtered = filtered.map((oi: any) => {
           const item = allMenuItems.find((m: any) => m.id === oi.menu_item_id);
           return {
             ...oi,
@@ -331,7 +331,7 @@ class MockQueryBuilder {
 
     if (this.action === 'insert') {
       const rowsToInsert = Array.isArray(this.payload) ? this.payload : [this.payload];
-      const insertedRows = rowsToInsert.map(row => {
+      const insertedRows = rowsToInsert.map((row: any) => {
         return {
           id: row.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'mock-uuid-' + Math.random().toString(36).substr(2, 9)),
           created_at: new Date().toISOString(),
@@ -352,7 +352,7 @@ class MockQueryBuilder {
 
     if (this.action === 'update') {
       let updatedCount = 0;
-      const updatedData = data.map(item => {
+      const updatedData = data.map((item: any) => {
         let isMatch = true;
         for (const filterFn of this.filters) {
           if (!filterFn(item)) {
@@ -388,7 +388,7 @@ class MockQueryBuilder {
     }
 
     if (this.action === 'delete') {
-      const remainingData = data.filter(item => {
+      const remainingData = data.filter((item: any) => {
         let isMatch = true;
         for (const filterFn of this.filters) {
           if (!filterFn(item)) {

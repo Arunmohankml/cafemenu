@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = createBrowserClient()
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser: any) => {
       setUser(firebaseUser)
 
       if (firebaseUser) {

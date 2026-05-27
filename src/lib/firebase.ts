@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithEmailAndPassword as realSignInWithEmail, signInWithPopup as realSignInWithPopup, signOut as realSignOut } from "firebase/auth";
 
-const isMockFirebase = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 
+let isMockFirebase = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 
                         process.env.NEXT_PUBLIC_FIREBASE_API_KEY.includes('placeholder') || 
                         process.env.NEXT_PUBLIC_FIREBASE_API_KEY === '';
 
@@ -20,9 +20,14 @@ let realAuth: any = null;
 let realGoogleProvider: any = null;
 
 if (!isMockFirebase) {
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  realAuth = getAuth(app);
-  realGoogleProvider = new GoogleAuthProvider();
+  try {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    realAuth = getAuth(app);
+    realGoogleProvider = new GoogleAuthProvider();
+  } catch (error: any) {
+    console.warn("⚠️ Firebase Client SDK initialization failed. Falling back to Mock Auth. Reason:", error.message);
+    isMockFirebase = true;
+  }
 }
 
 // Safe base64 encoding for JWT generation in both Browser & Node/Edge environments
