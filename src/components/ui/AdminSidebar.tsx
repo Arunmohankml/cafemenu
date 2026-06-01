@@ -6,18 +6,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function AdminSidebar() {
-  const { profile, signOut } = useAuth();
+  const { profile } = useAuth();
   const pathname = usePathname();
 
   const links = [
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/admin/orders", icon: ShoppingBag, label: "Orders" },
     { href: "/admin/tables", icon: Grid, label: "Tables" },
-    { href: "/admin/menu", icon: Coffee, label: "Menu" },
-    ...(profile?.role === "admin" ? [
-      { href: "/admin/staff", icon: Users, label: "Staff" },
-      { href: "/admin/analytics", icon: Settings, label: "Analytics" }
-    ] : [])
+    { href: "/admin/menu", icon: Coffee, label: "Menu" }
   ];
 
   return (
@@ -50,17 +46,13 @@ export function AdminSidebar() {
         <div className="p-4 mt-auto">
           <div className="glass p-4 rounded-2xl border-white/5 flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center uppercase font-mono text-xs">
-              {profile?.full_name?.substring(0, 2) || profile?.email?.substring(0, 2) || "U"}
+              {profile?.full_name?.substring(0, 2) || profile?.email?.substring(0, 2) || "AD"}
             </div>
             <div className="overflow-hidden">
-              <div className="text-sm font-medium truncate">{profile?.full_name || "User"}</div>
-              <div className="text-[10px] text-white/50 uppercase tracking-widest">{profile?.role}</div>
+              <div className="text-sm font-medium truncate">{profile?.full_name || "Administrator"}</div>
+              <div className="text-[10px] text-white/50 uppercase tracking-widest">{profile?.role || "Full Access"}</div>
             </div>
           </div>
-          <button onClick={signOut} className="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">
-            <LogOut size={18} />
-            Sign Out
-          </button>
         </div>
       </aside>
 

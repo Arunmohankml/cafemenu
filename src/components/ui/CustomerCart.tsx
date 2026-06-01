@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useCartStore } from "@/lib/store";
 import { createBrowserClient } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,7 @@ export function CustomerCart({ tableId, setActiveOrder }: { tableId: number, set
     tipPercentage, setTipPercentage, editingOrderId, setEditingOrderId
   } = useCartStore();
 
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   const handleCheckout = async () => {
     if (items.length === 0) return;

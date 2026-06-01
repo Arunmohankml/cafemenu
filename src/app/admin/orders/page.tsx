@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createBrowserClient, Database } from "@/lib/supabase";
 import { Receipt, Download, Search, X, Clock, Calendar, Hash, User, Coffee, ChevronRight, Loader2, Trash2 } from "lucide-react";
@@ -32,7 +32,7 @@ function AdminOrdersContent() {
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const supabase = createBrowserClient();
+  const supabase = useMemo(() => createBrowserClient(), []);
   const searchParams = useSearchParams();
   const router = useRouter();
 

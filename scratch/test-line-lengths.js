@@ -1,0 +1,51 @@
+const rawBase64 = `MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDBo2YIBD2Qz8zG
+6aau3w+IV6/cI5YuybN5bR4PjbvW0OZDma0mfQO5yUeFbx65rsD+SNUQCrhDF8Jb
+Pi2ri13+JkNC1hVGV4D3ThOyO01IMqpQII1ozPHq4zLPvKVp1ILpwxVzD8BIX1Ov
+Dl39+fJHaVjIhLAWGPXepW5z2M7aZLIWvf+HyWt4XTzOf+23sKSJkA7SGapba5zG
+oMLWQv8vg9OaNwPC0zSnE9u3ktfuqmN3d/+/YZrGv81dnQtImU3fZwRaNkUVYLLI
+VM5uAGIYf1tgHdhzdtx35UCA7Wng6aXnPPKA5+jaMHjyHgbcjDujDdBOfZ1SZdLg
+h134hrkDAgMBAAECggEAXCuF1o0GLRbsd0YiZByjDRgICnYZ931k44iQBYFGhvL6
+l/TfWXGqQ1XOqHIDIwlOrftHB5LCsJTvm3TWUlBNVjsqSvcSO2BNb+oHMBBQMeyD
+6w4DoX3kLRUmS4GVDvHruo90d0dpFEnj0HC7RrghneJEM3YNRwdsiSUflR7/Hy54
++mn8Cfgzryi5AppMbaf2pyJea2EHhjj3qk7lUbMNosxHC527DbzMNbs2SnCmyzYD
+Xbx2qEE7xnQxEG+CIRUEKRfn9NgSr5FNJjwdeLMMsMKTtj3S3+kKy26t3lIR4Wii
+c2FaI60DGL5VJtw37rMk0Jm/sWe2SkzObGkfqoEUiQKBgQDof04iY7vvIDSp4tCC
+s6sLAtw7RaVzUVYFtIN3pEsb6JjEd0JcT9ulCqPaDV53o/OuLr+0yIYcSFiCkIhA
+q6J1XSkPii6GMAOydnWMTyEO7uArgQ4EEqFqEx6z4BYI8486KtWUjs9NWKw5gY8v
+TNwlodaAgFY2eQlXz3gjFTG6pwKBgQDVNnpnx+aKcKjbC14mPOXDro+bVionE2cf
+nPwgqSmmJPLXIwDFmoXljKSAVcfuT0jyK03OC6wqAGLnWKGO9sxZuKzQ05hbEcDEZ
+XqOf3UQKEcFa0TBEytQxlV7I2vntFMGeNrKj8kib2kQIgyrKcJnobaKNFvl9PHQJ
+Feeuu7SGRQKBgQClgFniaRSS+F4EwQykvbj4MaUMHFvWZwPRM9qSBEXjLAPzduGq
+TL6SEazpv7KLgA4q4+RbkJLG90jqSHB1eLhAy3w7L6ZGp086btDmfD2QH8M7tLaB
+d7GnjMzCRrXo0VgXk/5Nrgsrh/+xP+TpStE7iKTk/HZieG6KL4nZj3DC6QKBgBGP
+uSlPJ8gDW4UfPJP9tBcYC7AJutMZIAdM08lX87VgEMEGQ4tmhW8Ldh8OEmCsklwE
+6qC/50+BudzP2tdHJvPQDy7EPN/VNdYXG3cRbIc/yyNF06n24t9qpDH7B1blvMTh
+UHl8fUqJAc2JsD6YY7TnQtikICiOkCgna7vSrh3ZAoGAS4HIUJeGZLMFxWhezhNQ
+Jz9SFhcvA9qCL3w8F0Xd/N3tVc2AV3cCLuvFpEMDLb1rMMhtRyXBznCgvT8GO+z2
+ATDondZq1IxR3ckuONkNp76wdV9+0x3qHwN3iS+SSmxsKuaNt5o49ys05r2SeaWD
+pj/x1KSmzHFW8eUNevfHpnQ=`;
+
+const base64 = rawBase64.replace(/\s+/g, '');
+const crypto = require('crypto');
+
+console.log("--- TEST 1: Single Continuous Line ---");
+const test1 = `-----BEGIN PRIVATE KEY-----\n${base64}\n-----END PRIVATE KEY-----\n`;
+try {
+  crypto.createPrivateKey(test1);
+  console.log("✅ SUCCESS!");
+} catch (e) {
+  console.log("❌ FAILED:", e.message);
+}
+
+console.log("--- TEST 2: Exact 64-char lines ---");
+const lines = [];
+for (let i = 0; i < base64.length; i += 64) {
+  lines.push(base64.substring(i, i + 64));
+}
+const test2 = `-----BEGIN PRIVATE KEY-----\n${lines.join('\n')}\n-----END PRIVATE KEY-----\n`;
+try {
+  crypto.createPrivateKey(test2);
+  console.log("✅ SUCCESS!");
+} catch (e) {
+  console.log("❌ FAILED:", e.message);
+}
