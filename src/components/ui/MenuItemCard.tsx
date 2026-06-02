@@ -77,14 +77,14 @@ export function MenuItemCard({ item }: { item: any }) {
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
-      className={`menu-item-card aspect-square relative rounded-[24px] overflow-hidden group cursor-pointer border border-white/5 bg-black/45 backdrop-blur-md hover:border-white/12 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.6)] flex flex-col p-2.5 ${
+     className={`menu-item-card h-[205px] md:h-[240px] relative rounded-[22px] overflow-hidden group cursor-pointer border border-white/10 bg-black/60 backdrop-blur-md hover:border-white/15 transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.6)] flex flex-col p-2.5 ${
         item.is_veg 
           ? 'hover:shadow-[0_8px_30px_rgba(16,185,129,0.06)]' 
           : 'hover:shadow-[0_8px_30px_rgba(239,68,68,0.06)]'
       }`}
     >
       {/* Framed Image Container (Decreased Size!) */}
-      <div className="w-full h-[52%] rounded-[14px] overflow-hidden bg-white/5 relative shrink-0 border border-white/5">
+      <div className="w-full h-[120px] md:h-[135px] rounded-[14px] overflow-hidden bg-white/5 relative shrink-0 border border-white/10">
         {item.image_url ? (
           <img 
             src={item.image_url} 

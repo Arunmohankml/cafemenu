@@ -33,7 +33,7 @@ export function AdminSidebar() {
         <nav className="flex-1 px-4 py-8 flex flex-col gap-2">
           {links.map((link) => {
             const Icon = link.icon;
-            const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            const isActive = pathname === link.href || (link.href !== '/admin' && pathname.startsWith(`${link.href}/`));
             return (
               <Link key={link.href} href={link.href} className={`sidebar-link ${isActive ? "active" : ""}`}>
                 <Icon size={18} />
@@ -60,7 +60,7 @@ export function AdminSidebar() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#080808]/90 backdrop-blur-lg border-t border-white/10 z-50 flex items-center justify-around px-2 shadow-[0_-8px_30px_rgba(0,0,0,0.8)]">
         {links.map((link) => {
           const Icon = link.icon;
-          const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`);
+          const isActive = pathname === link.href || (link.href !== '/admin' && pathname.startsWith(`${link.href}/`));
           return (
             <Link 
               key={link.href} 

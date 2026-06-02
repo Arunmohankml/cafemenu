@@ -37,6 +37,16 @@ export default function AdminMenuPage() {
     fetchData();
   }, []);
 
+  // Disable body scroll when modal is open
+  useEffect(() => {
+    if (isAdding) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isAdding]);
+
   const fetchData = async () => {
     const [menuRes, catRes] = await Promise.all([
       supabase.from('menu_items').select('*').order('created_at', { ascending: false }),
@@ -196,7 +206,7 @@ export default function AdminMenuPage() {
 
       <AnimatePresence>
         {isAdding && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center">
             {/* Backdrop overlay */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -206,20 +216,19 @@ export default function AdminMenuPage() {
               className="fixed inset-0 bg-black/90 backdrop-blur-md"
             />
 
-            {/* Modal Body Container (Full screen, non-scrollable dashboard layout) */}
+              {/* Modal Body Container - Full screen on mobile */}
             <motion.div
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
-              className="relative w-full h-full max-w-4xl max-h-screen md:max-h-[92vh] md:rounded-3xl p-4 md:p-8 border-0 md:border border-white/10 bg-[#060606]/98 backdrop-blur-xl shadow-[0_0_80px_rgba(0,0,0,0.95)] z-10 overflow-hidden flex flex-col"
+              className="relative w-full h-full md:max-w-4xl md:max-h-[92vh] md:rounded-3xl md:m-4 p-3 md:p-8 border-0 md:border border-white/10 bg-[#060606] md:bg-[#060606]/98 backdrop-blur-xl shadow-[0_0_80px_rgba(0,0,0,0.95)] z-10 overflow-y-auto flex flex-col"
             >
-              <form onSubmit={handleSubmit} className="flex flex-col h-full space-y-4 min-h-0">
-                <div className="flex justify-between items-center border-b border-white/5 pb-2.5 shrink-0">
+              <form onSubmit={handleSubmit} className="flex flex-col space-y-3 md:space-y-4 min-h-0">
+                <div className="flex justify-between items-center shrink-0">
                   <div>
-                    <h2 className="text-xs md:text-sm uppercase tracking-widest text-gradient font-bold">
+                    <h2 className="text-[11px] md:text-sm uppercase tracking-widest text-gradient font-bold">
                       {editingItem ? `Editing: ${editingItem.name}` : "Create New Menu Item"}
                     </h2>
-                    <p className="text-[9px] text-white/30 uppercase tracking-widest mt-0.5">Fill menu item details in one view</p>
                   </div>
                   <button 
                     type="button" 
@@ -230,23 +239,23 @@ export default function AdminMenuPage() {
                   </button>
                 </div>
 
-                {/* Grid Split Content Panel (Fully non-scrollable) */}
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 overflow-hidden min-h-0 py-1">
+                {/* Single flow layout on mobile, two columns on desktop */}
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8 min-h-0">
                   {/* Left Column: Form Info details */}
-                  <div className="space-y-3.5 flex flex-col justify-between overflow-y-auto pr-1">
+                  <div className="space-y-3 md:space-y-4">
                     <div>
-                      <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1.5 font-bold">Item Name</label>
-                      <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="input-glass text-xs md:text-sm py-2 px-3.5" placeholder="e.g. Quantum Matcha" />
+                      <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1 font-bold">Item Name</label>
+                      <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="input-glass text-xs md:text-sm py-2 px-3" placeholder="e.g. Quantum Matcha" />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3.5">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1.5 font-bold">Price (₹)</label>
-                        <input required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="input-glass text-xs md:text-sm py-2 px-3.5" placeholder="0.00" />
+                        <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1 font-bold">Price (₹)</label>
+                        <input required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="input-glass text-xs md:text-sm py-2 px-3" placeholder="0.00" />
                       </div>
                       <div>
-                        <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1.5 font-bold">Item Type</label>
-                        <select required value={formData.is_veg ? "veg" : "non-veg"} onChange={e => setFormData({...formData, is_veg: e.target.value === "veg"})} className="input-glass text-xs md:text-sm py-2 px-3.5 bg-[#111] text-white">
+                        <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1 font-bold">Item Type</label>
+                        <select required value={formData.is_veg ? "veg" : "non-veg"} onChange={e => setFormData({...formData, is_veg: e.target.value === "veg"})} className="input-glass text-xs md:text-sm py-2 px-3 bg-[#111] text-white">
                           <option value="veg" className="bg-[#181818]">Vegetarian</option>
                           <option value="non-veg" className="bg-[#181818]">Non-Vegetarian</option>
                         </select>
@@ -254,83 +263,78 @@ export default function AdminMenuPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1.5 font-bold">Category</label>
-                      <select required value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})} className="input-glass text-xs md:text-sm py-2 px-3.5 bg-[#111] text-white">
+                      <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1 font-bold">Category</label>
+                      <select required value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})} className="input-glass text-xs md:text-sm py-2 px-3 bg-[#111] text-white">
                         <option value="" className="bg-[#181818]">Select Category</option>
                         {categories.map(c => <option key={c.id} value={c.id} className="bg-[#181818]">{c.name}</option>)}
                       </select>
                     </div>
 
-                    <div className="flex-1 flex flex-col min-h-0">
-                      <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1.5 font-bold shrink-0">Description</label>
-                      <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="input-glass text-xs md:text-sm py-2 px-3.5 flex-1 min-h-[70px] resize-none leading-relaxed" placeholder="Brief elegant description..." />
+                    <div>
+                      <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 mb-1 font-bold">Description</label>
+                      <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="input-glass text-xs md:text-sm py-2 px-3 w-full resize-none leading-relaxed" rows={2} placeholder="Brief elegant description..." />
+                    </div>
+
+                    {/* Image section moved inline on mobile */}
+                    <div className="md:hidden border border-white/5 bg-white/[0.01] rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Image</span>
+                        <div className="flex gap-1">
+                          <button type="button" onClick={() => setImageInputMode('url')} className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8px] uppercase font-bold tracking-wider transition-all border ${imageInputMode === 'url' ? 'bg-white text-black border-white' : 'glass border-transparent text-white/40'}`}><LinkIcon size={7} /> URL</button>
+                          <button type="button" onClick={() => setImageInputMode('upload')} className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8px] uppercase font-bold tracking-wider transition-all border ${imageInputMode === 'upload' ? 'bg-white text-black border-white' : 'glass border-transparent text-white/40'}`}><UploadCloud size={7} /> Upload</button>
+                        </div>
+                      </div>
+                      {imageInputMode === 'url' ? (
+                        <input value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} className="input-glass text-xs py-1.5 px-3 w-full" placeholder="Paste path e.g. /images/mojito.png" />
+                      ) : (
+                        <label className="flex items-center justify-center border border-dashed border-white/10 rounded-lg p-2 hover:bg-white/5 cursor-pointer">
+                          {uploadingImage ? (
+                            <div className="flex items-center gap-2 py-1"><Loader2 className="w-4 h-4 animate-spin text-white/50" /><span className="text-[8px] text-white/50">Uploading...</span></div>
+                          ) : (
+                            <div className="flex items-center gap-2"><UploadCloud size={14} className="text-white/40" /><span className="text-[9px] text-white/80">Select file</span></div>
+                          )}
+                          <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploadingImage} />
+                        </label>
+                      )}
+                      {formData.image_url && (
+                        <div className="flex items-center gap-2 bg-black/40 rounded-lg p-2">
+                          <img src={formData.image_url} alt="" className="w-8 h-8 rounded-lg object-contain bg-white/5" />
+                          <span className="text-[8px] font-mono text-white/60 truncate flex-1">{formData.image_url}</span>
+                          <button type="button" onClick={() => setFormData({...formData, image_url: ""})} className="w-4 h-4 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center shrink-0"><X size={8} /></button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Right Column: Media Handling Uploads & Image Thumbnail Preview */}
-                  <div className="space-y-3.5 flex flex-col overflow-hidden">
+                  {/* Right Column: Desktop only */}
+                  <div className="hidden md:flex flex-col overflow-hidden">
                     <div className="border border-white/5 bg-white/[0.01] rounded-2xl p-4 flex-1 flex flex-col justify-between overflow-hidden min-h-0">
                       <div className="space-y-3 shrink-0">
                         <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                          <label className="block text-[10px] md:text-xs uppercase tracking-widest text-white/40 font-bold">Thumbnail Image</label>
+                          <label className="block text-xs uppercase tracking-widest text-white/40 font-bold">Image</label>
                           <div className="flex gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => setImageInputMode('url')}
-                              className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold tracking-wider transition-all border ${
-                                imageInputMode === 'url'
-                                  ? 'bg-white text-black border-white'
-                                  : 'glass border-transparent text-white/40 hover:text-white'
-                              }`}
-                            >
-                              <LinkIcon size={8} /> Link URL
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setImageInputMode('upload')}
-                              className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold tracking-wider transition-all border ${
-                                imageInputMode === 'upload'
-                                  ? 'bg-white text-black border-white'
-                                  : 'glass border-transparent text-white/40 hover:text-white'
-                              }`}
-                            >
-                              <UploadCloud size={8} /> Upload
-                            </button>
+                            <button type="button" onClick={() => setImageInputMode('url')} className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold tracking-wider transition-all border ${imageInputMode === 'url' ? 'bg-white text-black border-white' : 'glass border-transparent text-white/40 hover:text-white'}`}><LinkIcon size={8} /> Link URL</button>
+                            <button type="button" onClick={() => setImageInputMode('upload')} className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] uppercase font-bold tracking-wider transition-all border ${imageInputMode === 'upload' ? 'bg-white text-black border-white' : 'glass border-transparent text-white/40 hover:text-white'}`}><UploadCloud size={8} /> Upload</button>
                           </div>
                         </div>
-
                         {imageInputMode === 'url' ? (
                           <div className="space-y-1">
-                            <input
-                              value={formData.image_url}
-                              onChange={e => setFormData({...formData, image_url: e.target.value})}
-                              className="input-glass text-xs md:text-sm py-2 px-3.5"
-                              placeholder="Paste path e.g. /images/mojito.png"
-                            />
+                            <input value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} className="input-glass text-sm py-2 px-3.5" placeholder="Paste path e.g. /images/mojito.png" />
                             <p className="text-[8px] text-white/20 uppercase tracking-widest font-mono">Paste link or static folder paths</p>
                           </div>
                         ) : (
                           <div>
                             <label className="flex flex-col items-center justify-center border border-dashed border-white/10 rounded-xl p-3.5 hover:bg-white/5 cursor-pointer transition-all relative">
                               {uploadingImage ? (
-                                <div className="flex flex-col items-center gap-1 py-1.5">
-                                  <Loader2 className="w-4 h-4 animate-spin text-white/50" />
-                                  <span className="text-[8px] text-white/50 uppercase tracking-widest">Uploading to Cloud Storage...</span>
-                                </div>
+                                <div className="flex flex-col items-center gap-1 py-1.5"><Loader2 className="w-4 h-4 animate-spin text-white/50" /><span className="text-[8px] text-white/50 uppercase tracking-widest">Uploading to Cloud Storage...</span></div>
                               ) : (
-                                <div className="flex flex-col items-center gap-0.5">
-                                  <UploadCloud size={16} className="text-white/40 mb-0.5" />
-                                  <span className="text-[10px] text-white/80 font-medium">Select image file</span>
-                                  <span className="text-[8px] text-white/40 uppercase tracking-wider font-mono">PNG, JPG, WEBP</span>
-                                </div>
+                                <div className="flex flex-col items-center gap-0.5"><UploadCloud size={16} className="text-white/40 mb-0.5" /><span className="text-[10px] text-white/80 font-medium">Select image file</span><span className="text-[8px] text-white/40 uppercase tracking-wider font-mono">PNG, JPG, WEBP</span></div>
                               )}
                               <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploadingImage} />
                             </label>
                           </div>
                         )}
                       </div>
-
-                      {/* Realtime Thumbnail Preview Container */}
                       <div className="flex-1 flex items-center justify-center bg-black/40 border border-white/5 rounded-xl p-3 mt-3 min-h-[90px] overflow-hidden relative">
                         {formData.image_url ? (
                           <div className="flex items-center gap-3.5 w-full">
@@ -339,27 +343,18 @@ export default function AdminMenuPage() {
                               <span className="text-[8px] text-white/40 uppercase tracking-widest font-bold block">Preview Thumbnail</span>
                               <span className="text-[9px] font-mono text-white/70 truncate block">{formData.image_url}</span>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => setFormData({...formData, image_url: ""})}
-                              className="w-6 h-6 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center transition-colors shrink-0"
-                            >
-                              <X size={10} />
-                            </button>
+                            <button type="button" onClick={() => setFormData({...formData, image_url: ""})} className="w-6 h-6 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500/20 flex items-center justify-center transition-colors shrink-0"><X size={10} /></button>
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center gap-1 text-white/20 uppercase tracking-widest font-mono text-[8px]">
-                            <ImageIcon size={16} className="opacity-40" />
-                            <span>No Image Selected</span>
-                          </div>
+                          <div className="flex flex-col items-center gap-1 text-white/20 uppercase tracking-widest font-mono text-[8px]"><ImageIcon size={16} className="opacity-40" /><span>No Image Selected</span></div>
                         )}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Modal Footer Actions (Sticky bottom) */}
-                <div className="pt-2.5 border-t border-white/5 flex justify-end gap-3 shrink-0">
+                {/* Modal Footer Actions */}
+                <div className="pt-3 border-t border-white/5 flex justify-end gap-3 shrink-0">
                   <button type="button" onClick={handleCancel} className="btn-glass text-[10px] md:text-xs py-2 px-4">CANCEL</button>
                   <button type="submit" className="btn-primary text-[10px] md:text-xs py-2 px-4">{editingItem ? "UPDATE MENU ITEM" : "SAVE MENU ITEM"}</button>
                 </div>

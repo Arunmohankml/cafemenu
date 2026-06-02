@@ -75,6 +75,21 @@ export function CustomerCart({ tableId, setActiveOrder }: { tableId: number, set
         setIsOpen(false);
       } else {
         // Placing a new order!
+        // Limit: max 2 active orders per table
+        const { data: existingOrders, error: countError } = await supabase
+          .from('orders')
+          .select('id, status')
+          .eq('table_id', tableId)
+          .in('status', ['received', 'preparing', 'ready', 'served']);
+
+        if (countError) throw countError;
+
+        if (existingOrders && existingOrders.length >= 2) {
+          toast.error("Maximum 2 active orders allowed per table");
+          setIsCheckingOut(false);
+          return;
+        }
+
         // 1. Generate session ID and edit deadline
         const sessionId = crypto.randomUUID();
         localStorage.setItem(`customer_session_t${tableId}`, sessionId);

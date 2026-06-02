@@ -21,14 +21,28 @@ export default function TablePage({ params }: { params: { id: string } }) {
   const [search, setSearch] = useState("");
   const [connected, setConnected] = useState(false);
   
-  // Active user session/order tracking
-  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
-  const [lastNotificationStatus, setLastNotificationStatus] = useState<string | null>(null);
+  // Active user session/order tracking - supports up to 2 orders per table
+  const [activeOrders, setActiveOrders] = useState<Order[]>([]);
+  const [lastNotificationStatus, setLastNotificationStatus] = useState<Map<string, string>>(new Map());
   
   const supabase = createBrowserClient();
   const tableId = parseInt(params.id);
 
   const { setItems, setEditingOrderId } = useCartStore();
+
+  const addOrUpdateOrder = (order: Order) => {
+    setActiveOrders(prev => {
+      const exists = prev.find(o => o.id === order.id);
+      if (exists) {
+        return prev.map(o => o.id === order.id ? order : o);
+      }
+      return [...prev, order];
+    });
+  };
+
+  const removeOrder = (orderId: string) => {
+    setActiveOrders(prev => prev.filter(o => o.id !== orderId));
+  };
 
   useEffect(() => {
     // Premium loading simulation + data fetch
@@ -42,11 +56,10 @@ export default function TablePage({ params }: { params: { id: string } }) {
     const channel = supabase
       .channel(`table-${tableId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `table_id=eq.${tableId}` }, (payload: any) => {
-        if (payload.new.status === 'completed') {
-          setActiveOrder(null);
-          localStorage.removeItem(`active_order_${tableId}`);
+        if (payload.new.status === 'completed' || payload.new.status === 'cancelled') {
+          removeOrder(payload.new.id);
         } else {
-          setActiveOrder(payload.new as Order);
+          addOrUpdateOrder(payload.new as Order);
         }
       })
       .subscribe();
@@ -56,23 +69,23 @@ export default function TablePage({ params }: { params: { id: string } }) {
 
   // Handle active realtime staff acceptance notifications
   useEffect(() => {
-    if (!activeOrder) return;
-    
-    if (lastNotificationStatus !== null && activeOrder.status !== lastNotificationStatus) {
-      if (activeOrder.status === 'preparing') {
-        toast.success("✨ Great news! Your order has been ACCEPTED by staff and is now preparing in the kitchen!", { duration: 6000 });
-      } else if (activeOrder.status === 'cancelled') {
-        toast.error("⚠️ Your order has been DECLINED by our staff. Please verify or contact support.", { duration: 8000 });
-        setActiveOrder(null);
-        localStorage.removeItem(`customer_session_t${tableId}`);
-      } else if (activeOrder.status === 'ready') {
-        toast.success("🚀 Your order is READY! The waiter is serving it shortly.", { duration: 6000 });
-      } else if (activeOrder.status === 'served') {
-        toast.success("🍽️ Your order has been SERVED! Enjoy your meal!", { duration: 6000 });
+    activeOrders.forEach(order => {
+      const prevStatus = lastNotificationStatus.get(order.id);
+      if (prevStatus !== undefined && order.status !== prevStatus) {
+        if (order.status === 'preparing') {
+          toast.success(`✨ Order #${order.id.split('-')[0].toUpperCase()} has been ACCEPTED and is now preparing!`, { duration: 6000 });
+        } else if (order.status === 'cancelled') {
+          toast.error(`⚠️ Order #${order.id.split('-')[0].toUpperCase()} has been DECLINED.`, { duration: 8000 });
+          removeOrder(order.id);
+        } else if (order.status === 'ready') {
+          toast.success(`🚀 Order #${order.id.split('-')[0].toUpperCase()} is READY!`, { duration: 6000 });
+        } else if (order.status === 'served') {
+          toast.success(`🍽️ Order #${order.id.split('-')[0].toUpperCase()} has been SERVED!`, { duration: 6000 });
+        }
       }
-    }
-    setLastNotificationStatus(activeOrder.status);
-  }, [activeOrder?.status]);
+    });
+    setLastNotificationStatus(new Map(activeOrders.map(o => [o.id, o.status])));
+  }, [activeOrders]);
 
   const fetchMenu = async () => {
     const { data, error } = await supabase
@@ -94,11 +107,10 @@ export default function TablePage({ params }: { params: { id: string } }) {
         .from('orders')
         .select('*')
         .eq('customer_session', sessionId)
-        .in('status', ['received', 'preparing', 'ready', 'served'])
-        .single();
-      if (data) {
-        setActiveOrder(data);
-        setLastNotificationStatus(data.status);
+        .in('status', ['received', 'preparing', 'ready', 'served']);
+      if (data && data.length > 0) {
+        setActiveOrders(data as Order[]);
+        setLastNotificationStatus(new Map(data.map((o: Order) => [o.id, o.status])));
       }
     }
   };
@@ -109,23 +121,24 @@ export default function TablePage({ params }: { params: { id: string } }) {
     return catMatch && searchMatch;
   });
 
-  const cancelOrder = async () => {
-    if (!activeOrder || activeOrder.status !== 'received') return;
-    const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', activeOrder.id);
+  const cancelOrder = async (orderId: string) => {
+    const order = activeOrders.find(o => o.id === orderId);
+    if (!order || order.status !== 'received') return;
+    const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
     if (!error) {
-      setActiveOrder(null);
-      localStorage.removeItem(`customer_session_t${tableId}`);
+      removeOrder(orderId);
       toast.success("Order cancelled successfully");
     }
   };
 
-  const handleEditOrder = async () => {
-    if (!activeOrder) return;
+  const handleEditOrder = async (orderId: string) => {
+    const order = activeOrders.find(o => o.id === orderId);
+    if (!order) return;
     try {
       const { data, error } = await supabase
         .from('order_items')
         .select('*, menu_items(image_url)')
-        .eq('order_id', activeOrder.id);
+        .eq('order_id', orderId);
       
       if (error) throw error;
       if (data) {
@@ -137,7 +150,7 @@ export default function TablePage({ params }: { params: { id: string } }) {
           image_url: item.menu_items?.image_url
         }));
         setItems(cartItems);
-        setEditingOrderId(activeOrder.id);
+        setEditingOrderId(orderId);
         toast.success("🛒 Order items loaded! Open your cart on the bottom right to make changes.", { duration: 5000 });
       }
     } catch (err: any) {
@@ -164,7 +177,7 @@ export default function TablePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="min-h-screen pb-32 animate-fade-in">
-      <header className="sticky top-0 z-30 glass-md border-b border-white/5 px-6 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white text-black flex items-center justify-center">
             <Coffee size={20} />
@@ -176,61 +189,65 @@ export default function TablePage({ params }: { params: { id: string } }) {
         </div>
       </header>
 
-      {/* Active Order Banner with Acceptance State */}
+      {/* Active Orders Section - supports up to 2 orders */}
       <AnimatePresence>
-        {activeOrder && (
+        {activeOrders.length > 0 && (
           <motion.div 
             initial={{ height: 0, opacity: 0 }} 
             animate={{ height: 'auto', opacity: 1 }} 
             exit={{ height: 0, opacity: 0 }}
-            className="px-6 pt-6 overflow-hidden"
+            className="px-6 pt-6 space-y-3"
           >
-            <div className={`glass-md p-5 rounded-2xl border-l-2 ${
-              activeOrder.status === 'received' ? 'border-blue-500' :
-              activeOrder.status === 'preparing' ? 'border-amber-500' : 'border-emerald-500'
-            }`}>
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-sm font-medium uppercase tracking-widest mb-1 flex items-center gap-2">
-                    Order Status: <span className="text-gradient">
-                      {activeOrder.status === 'received' ? 'Pending Acceptance' : activeOrder.status}
-                    </span>
-                  </h3>
-                  <p className="text-[10px] text-white/40 font-mono uppercase tracking-widest">ID: {activeOrder.id.split('-')[0].toUpperCase()}</p>
+            {activeOrders.map(order => (
+              <motion.div 
+                key={order.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={`glass-md p-4 rounded-2xl border-l-2 ${
+                  order.status === 'received' ? 'border-blue-500' :
+                  order.status === 'preparing' ? 'border-amber-500' : 'border-emerald-500'
+                }`}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="text-xs font-medium uppercase tracking-widest mb-0.5 flex items-center gap-2">
+                      Order <span className="text-gradient">{order.id.split('-')[0].toUpperCase()}</span>
+                    </h3>
+                    <p className="text-[9px] text-white/40 font-mono uppercase tracking-widest">
+                      Status: {order.status === 'received' ? 'Pending Acceptance' : order.status}
+                    </p>
+                  </div>
+                  
+                  {order.status === 'received' ? (
+                    <div className="flex items-center gap-1 text-[9px] uppercase font-bold tracking-widest bg-blue-500/10 text-blue-400 px-2 py-1 rounded-lg border border-blue-500/20">
+                      <Clock size={10} className="animate-spin" />
+                      <span>Awaiting</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-[9px] uppercase font-bold tracking-widest bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-lg border border-emerald-500/20">
+                      <CheckCircle2 size={10} />
+                      <span>Accepted</span>
+                    </div>
+                  )}
                 </div>
-                
-                {activeOrder.status === 'received' ? (
-                  <div className="flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg border border-blue-500/20">
-                    <Clock size={12} className="animate-spin" />
-                    <span>Awaiting Staff</span>
+
+                {order.status === 'received' ? (
+                  <div className="flex gap-2">
+                    <button className="flex-1 btn-glass text-[10px] py-2 flex items-center justify-center gap-1 font-bold tracking-wider" onClick={() => handleEditOrder(order.id)}>
+                      <Edit2 size={10} /> EDIT
+                    </button>
+                    <button onClick={() => cancelOrder(order.id)} className="btn-glass border-red-500/30 hover:bg-red-500/10 text-red-400 flex-1 text-[10px] py-2 flex items-center justify-center gap-1 font-bold tracking-wider">
+                      <X size={10} /> CANCEL
+                    </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-                    <CheckCircle2 size={12} />
-                    <span>Accepted & Locked</span>
+                  <div className="flex items-center gap-1.5 text-[9px] bg-white/5 p-2 rounded-xl border border-white/5 text-white/60">
+                    <AlertCircle size={10} className="text-emerald-400 shrink-0" />
+                    <span>Being prepared by the chef.</span>
                   </div>
                 )}
-              </div>
-
-              {activeOrder.status === 'received' ? (
-                <div className="space-y-3">
-                  <p className="text-[10.5px] text-white/50 leading-relaxed uppercase tracking-wider">You can modify items or cancel this order until the kitchen accepts it.</p>
-                  <div className="flex gap-2">
-                    <button className="flex-1 btn-glass text-xs py-2.5 flex items-center justify-center gap-1.5 font-bold tracking-wider" onClick={handleEditOrder}>
-                      <Edit2 size={12} /> EDIT ITEMS
-                    </button>
-                    <button onClick={cancelOrder} className="btn-glass border-red-500/30 hover:bg-red-500/10 text-red-400 flex-1 text-xs py-2.5 flex items-center justify-center gap-1.5 font-bold tracking-wider">
-                      <X size={12} /> CANCEL ORDER
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-xs bg-white/5 p-3 rounded-xl border border-white/5 text-white/60">
-                  <AlertCircle size={14} className="text-emerald-400 shrink-0" />
-                  <span>The chef has accepted your order and is preparing it. It can no longer be edited.</span>
-                </div>
-              )}
-            </div>
+              </motion.div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -262,13 +279,13 @@ export default function TablePage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      <div className="px-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      <div className="px-2 md:px-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 md:gap-0">
         {filteredItems.map((item) => (
           <MenuItemCard key={item.id} item={item} />
         ))}
       </div>
 
-      <CustomerCart tableId={tableId} setActiveOrder={setActiveOrder} />
+      <CustomerCart tableId={tableId} setActiveOrder={addOrUpdateOrder} />
     </div>
   );
 }

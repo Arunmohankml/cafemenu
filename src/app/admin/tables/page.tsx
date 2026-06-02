@@ -118,7 +118,7 @@ export default function AdminTablesPage() {
                         <span>Cap: {table.capacity}</span>
                       </div>
                     </div>
-                    <span className={`text-[8px] md:text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full w-fit ${
+                    <span className={`text-[7px] md:text-[10px] uppercase font-bold tracking-widest px-1.5 md:px-2 py-0.5 rounded-full w-fit ${
                       table.status === 'occupied' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
                       table.status === 'reserved' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
                       'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -128,25 +128,25 @@ export default function AdminTablesPage() {
                   </div>
 
                   {/* Active orders section - highly compressed to fit screen */}
-                  <div className="my-2.5 p-2.5 rounded-xl glass space-y-1.5 flex-1">
-                    <span className="text-[9px] text-white/40 uppercase tracking-widest font-semibold block">Active Tickets</span>
+                  <div className="my-2 md:my-2.5 p-2 md:p-2.5 rounded-xl glass space-y-1.5 flex-1">
+                    <span className="text-[8px] md:text-[9px] text-white/40 uppercase tracking-widest font-semibold block">Active Tickets</span>
                     {hasActiveOrders ? (
-                      <div className="space-y-1.5 max-h-[80px] overflow-y-auto scrollbar-none">
+                      <div className="space-y-1 max-h-[80px] overflow-y-auto scrollbar-none">
                         {tableOrders.map(o => (
                           <div 
                             key={o.id} 
                             onClick={() => router.push(`/admin/orders?open=${o.id}`)}
-                            className="flex justify-between items-center text-[10px] cursor-pointer hover:bg-white/10 p-1.5 rounded-lg transition-all border border-white/5 hover:border-white/20"
+                            className="flex justify-between items-center text-[9px] md:text-[10px] cursor-pointer hover:bg-white/10 p-1 md:p-1.5 rounded-lg transition-all border border-white/5 hover:border-white/20"
                             title="Click to view and update order status"
                           >
-                            <span className="font-mono text-white/80 shrink-0">#{o.id.split('-')[0].substring(0, 4).toUpperCase()}</span>
-                            <span className={`badge badge-${o.status} text-[7px] md:text-[8px] py-0.5 px-1.5 shrink-0`}>{o.status}</span>
+                            <span className="font-mono text-white/70 md:text-white/80 shrink-0">#{o.id.split('-')[0].substring(0, 4).toUpperCase()}</span>
+                            <span className={`badge badge-${o.status} text-[5px] md:text-[8px] py-0.5 px-1 shrink-0`}>{o.status}</span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-[10px] text-white/30 flex items-center gap-1.5 py-0.5">
-                        <CheckCircle2 size={10} className="text-emerald-500/60" />
+                      <div className="text-[9px] md:text-[10px] text-white/30 flex items-center gap-1 py-0.5">
+                        <CheckCircle2 size={8} className="text-emerald-500/60" />
                         <span>Clean</span>
                       </div>
                     )}
